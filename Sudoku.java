@@ -8,35 +8,32 @@
 
 import java.util.Scanner;
 
-public class Sudoku2 {
+public class Sudoku {
     Scanner input = new Scanner(System.in);
     private final int[][] arr;
     private final int end;
 
-    public Sudoku2() {
+    public Sudoku() {
         arr = new int[9][9];
         end = arr.length;
-        enterBoard();
     }
 
     /* allows users to input values sudoku board */
-    private void enterBoard() {
+    public void enterBoard() {
         int num;
 
         for (int row=0; row<end; row++) {
             for (int column=0; column<end; column++) {
                 do {
-                    printBoard();
+                    /* runs at least once */
                     System.out.print("Please input a num (0 for blank or 1-9)\nfor ROW " + row + " COLUMN " + column + " : ");
                     num = input.nextInt();
 
+                    /* keeps going until number is valid, loop finishes when 81 cells are filled*/
                 } while ( num!=0 && !isValid(num, row, column) );
                 arr[row][column] = num;
             }
         }
-        printBoard(); // prints before
-        solveBoard(arr, end);
-        printBoard(); // prints after
     }
 
     /* checks if the input is a valid number and valid for the cell. */
@@ -44,7 +41,6 @@ public class Sudoku2 {
 
         /* if the user input is not 0-9, return invalid */
         if(userNum<1 || userNum>9) {
-            System.out.println("ONLY INPUT NUMBERS 0-9");
             return false;
         }
         if (!checkColumns(userNum, currRow)) {
@@ -54,7 +50,6 @@ public class Sudoku2 {
             return false;
         }
         if (!checkSubGrid(userNum, currRow, currCol)) {
-            System.out.println("CONFLICT IN SUBGRID");
             return false;
         }
         /* inputs valid num in cell and increments row/column respectively */
@@ -84,72 +79,62 @@ public class Sudoku2 {
     }
 
     private boolean checkSubGrid(int userNum, int currRow, int currCol) {
-        int sqrt = (int)Math.sqrt(arr.length);
-        // the rows and columns of the subgrid are checked
-        int row_subgrid = currRow - currRow % sqrt; //
-        int col_subgrid = currCol - currCol % sqrt;
+        /* keeps track of subgrid row count, should stop when rowCount and colCount equals 3 */
+        int rowCount=1, colCount=1;
 
-
-        for(int r = row_subgrid; r < row_subgrid + sqrt; r++){ // we start going by 3's --> the row starts at the first subgrid
-            for(int c = col_subgrid; c < col_subgrid + sqrt; c++){ // same with the columns
-                if(arr[r][c] == userNum){ // if anything is found in the rows or columns of the subgrid
-                    return false; // we cannot place the number there
+        for (int r = currRow-(currRow%3); rowCount<3; r++){
+            for (int c = currCol-(currCol%3); colCount<3; c++) {
+                /* loops through subgrid columns and rows to check for conflict */
+                if (arr[r][c] == userNum && arr[r][c]!=0) {
+                    return false;
                 }
+                /* updates one out of three column loops for one row */
+                colCount++;
             }
+            /* resets column to one and increments row by one */
+            colCount=1;
+            rowCount++;
         }
         return true;
     }
 
+    public boolean solveBoard() {
+        return solveBoard(0,0);
+    }
+
     /* solves sudoku board recursively */
-    public boolean solveBoard(int[][]board, int N) {
-        int row = -1;
-        int col = -1;
-        // checks if theres a 0
-        boolean empty = true;
-
-        // it's not empty if there is a 0 --> therefore we can add
-        for(int r = 0; r < N; r++){
-            for(int c = 0; c < N; c++) {
-                if (board[r][c] == 0) {
-                    row = r;
-                    col = c;
-
-                    empty = false;
-                    break;
-                }
-            }
-            // if there is not a zero, just continue
-            if(!empty){
-                break;
-            }
-        }
-
-        if(empty){
+    public boolean solveBoard(int row, int column) {
+        /* if row is == 9, finished solving*/
+        if (row>=end) {
+            System.out.println("end");
             return true;
         }
-
-        // RECURSIVELY CALLED
-        // If the placement is valid, we add the number to the cell
-        // Tf the placement is valid and it is possible to solve, return true
-        for(int num = 1; num <= N; num++){
-            if(isValid(num, row, col)){
-                board[row][col] = num;
-                if(solveBoard(board, N)){
-                    return true;
+        /* if column surpasses index, move to next row and reset column */
+        else if (column>=end) {
+            return solveBoard(row+1, 0);
+        }
+        /* if cell is blank, finds valid number to fill, if future cells conflict, continues until valid*/
+        else if (arr[row][column] == 0) {
+            for (int cellNum=1; cellNum<=end; cellNum++) {
+                if (isValid(cellNum, row, column)) {
+                    arr[row][column] = cellNum;
+                    /* if solveBoard returns true, number does not need to be edited again */
+                    if (solveBoard(row, column + 1) ) {
+                        return true;
+                    }
                 }
             }
-            // otherwise, it stays empty
-            else{
-                board[row][col] = 0;
-            }
+            /* reset and go back to the previous cell */
+            arr[row][column]=0;
+            return false;
         }
-        return false;
-
-}
+        /* if cell is not empty, continue to next cell */
+        return solveBoard(row, column+1);
+    }
 
     /* displays sudoku board */
     public void printBoard() {
-        System.out.println("---------------------------");
+        System.out.println("\n---------------------------");
 
         for (int row=0; row<arr.length; row++) {
             /* prints the | on the left side for each new row */
@@ -170,7 +155,11 @@ public class Sudoku2 {
     }
 
     public static void main(String[] args) {
-        Sudoku2 game = new Sudoku2();
+        Sudoku game = new Sudoku();
+        game.enterBoard(); // starts user input
+        game.printBoard(); // prints partially filled board
+        game.solveBoard(); // solves board fully
+        game.printBoard();
     }
 
 }
