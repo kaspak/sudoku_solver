@@ -1,11 +1,3 @@
-/* Group: Aaron Brion, Angela Richards, Kassy Pak
- *
- * Requirements:
- *      - must accept a partially filled Sudoku board from user (81 inputs)
- *      - generate completely filled board according to back tracking
- *      - must print correctly-generated Sudoku board
- * */
-
 import java.util.Scanner;
 
 public class Sudoku {
